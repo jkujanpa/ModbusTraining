@@ -5,6 +5,10 @@ const modbus = require("modbus-tcp");
 const modServer = new modbus.Server();
 const ExceptionCodes = modbus.Exceptions;
 
+const mb = require("jsmodbus");
+
+
+
 const coils = new Buffer(3);
 const discreteInputs = new Buffer(3);
 
@@ -26,8 +30,8 @@ modServer.on("read-coils", (from, to, reply) => {
   console.log('Server: read-coils from ' + from + ' to ' + to);
   if ((to - from) > memory.coils.endAddr) {
     console.log('Server: Error ' + ExceptionCodes.ILLEGAL_DATA_VALUE);
-    //return reply(ExceptionCodes.ILLEGAL_DATA_VALUE, null)
-    return reply("foo", null)
+    return reply(ExceptionCodes.ILLEGAL_DATA_VALUE, null)
+    //return reply("foo", null)
   }
 
   return reply(null, [ 1, 0, 1, 1 ]);
@@ -86,6 +90,35 @@ function onConnection(socket) {
 
 tcpServer.on('connection', onConnection);
 
+/*
 tcpServer.listen(3000, () => {
   console.log('Server: Listening port 3000');
+});
+*/
+
+
+var readCoils = function (start, quant) {
+
+    var resp = [];
+    for (var i = 0; i < quant; i += 1) {
+        resp.push(true);
+    }
+
+    return [resp];
+};
+
+
+
+mb.createTCPServer(3000, '127.0.0.1', function (err, server) {
+
+    if (err) {
+        console.log(err);
+        return;
+    }
+
+    server.addHandler(1, readCoils);
+    //server.addHandler(4, readInputRegHandler);
+    //server.addHandler(5, writeSingleCoil);
+    //server.addHandler(6, writeSingleRegister);
+
 });

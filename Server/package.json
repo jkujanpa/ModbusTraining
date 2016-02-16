@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "jsmodbus": "^0.5.1",
     "modbus-tcp": "^0.4.4"
   }
 }
