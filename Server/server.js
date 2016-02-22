@@ -5,41 +5,33 @@ const modbus = require("modbus-tcp");
 const modServer = new modbus.Server();
 const ExceptionCodes = modbus.Exceptions;
 
-const mb = require("jsmodbus");
-
-
-
-const coils = new Buffer(3);
-const discreteInputs = new Buffer(3);
-
 const memory = {
   coils: {
     startAddr: 0x00,  // 0
     endAddr: 0x17,    // 23 ==> 24 bits
-    data: coils
+    data: new Buffer(3)
   },
   discreteInputs: {
     startAddr: 0x00,  // 0
     endAddr: 0x17,    // 23 ==> 24 bits
-    date: discreteInputs
+    data: new Buffer(3)
   }
 }
 
 modServer.on("read-coils", (from, to, reply) => {
-
   console.log('Server: read-coils from ' + from + ' to ' + to);
   if ((to - from) > memory.coils.endAddr) {
     console.log('Server: Error ' + ExceptionCodes.ILLEGAL_DATA_VALUE);
     return reply(ExceptionCodes.ILLEGAL_DATA_VALUE, null)
-    //return reply("foo", null)
   }
-
-  return reply(null, [ 1, 0, 1, 1 ]);
+  const coils = memory.coils.data;
+  return reply(null, coils.slice(from, to));
 });
 
 modServer.on("read-discrete-inputs", (from, to, reply) => {
   console.log('Server: read-discrete-inputs');
-  return reply(null, [ 1, 0, 1, 1 ]);
+  const inputs = memory.discreteInputs.data;
+  return reply(null, inputs.slice(from, to));
 });
 
 modServer.on("read-input-registers", (from, to, reply) => {
@@ -90,35 +82,6 @@ function onConnection(socket) {
 
 tcpServer.on('connection', onConnection);
 
-/*
 tcpServer.listen(3000, () => {
   console.log('Server: Listening port 3000');
-});
-*/
-
-
-var readCoils = function (start, quant) {
-
-    var resp = [];
-    for (var i = 0; i < quant; i += 1) {
-        resp.push(true);
-    }
-
-    return [resp];
-};
-
-
-
-mb.createTCPServer(3000, '127.0.0.1', function (err, server) {
-
-    if (err) {
-        console.log(err);
-        return;
-    }
-
-    server.addHandler(1, readCoils);
-    //server.addHandler(4, readInputRegHandler);
-    //server.addHandler(5, writeSingleCoil);
-    //server.addHandler(6, writeSingleRegister);
-
 });
