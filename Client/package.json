@@ -1,5 +1,0 @@
-{
-  "dependencies": {
-    "modbus-tcp": "^0.4.4"
-  }
-}
