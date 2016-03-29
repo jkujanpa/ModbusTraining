@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "jsmodbus": "^0.5.1",
-    "modbus-tcp": "^0.4.4"
+    "modbus-tcp": "^0.4.4",
+    "ysm": "https://github.com/jkujanpa/ysm.git#master"
   }
 }
