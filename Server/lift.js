@@ -2,28 +2,36 @@
 
 const yFsm = require('ysm/lib/yfsm').yFsm;
 const yState = require('ysm/lib/yfsm').yState;
-//const util = require('util');
+
 
 var Lift = function() {
 
     const sm = yFsm();
-    const dispatch = sm.dispatch;
-    let persons = 0;
-    let floor = 0;
-    let order = 0;  // ordrer from [order] floor
+
+    let state = 'no_state';
+    let persons = 0;        // persons in lift
+    let currentFloor = 0;   // current lift location
+    let landingCall = 0;    // landing call to this floor
+    let carCall = 0;        // car call to this floor
+
+    let timeoutId;
+
+    function noOperation() {
+        sm.dispatch({signal: 'no_operation'});
+    };
 
     const free = yState({
         handler(event) {
             switch (event.signal) {
-                //case 'enter':
-                //    console.log('free - enter');
-                //    console.log('Transfer to s11');
-                //    return self.transfer(s11);
                 case 'landing_call':
-                    order = event.data;
-                    console.log('free - landing order to:' + order);
-                    console.log('Transfer to landingOrdered');
-                    sm.transfer(landingOrdered);
+                    landingCall = event.data;
+                    console.log('free - landing call to:' + landingCall);
+                    sm.transfer(landing_call);
+                    break;
+                case 'car_call':
+                    carCall = event.data;
+                    console.log('in_floor - car call to:' + carCall);
+                    sm.transfer(car_call);
                     break;
                 default:
                     break;
@@ -31,20 +39,20 @@ var Lift = function() {
         },
         entry(event) {
             console.log('Enter free.');
+            state = 'free';
         },
         exit(event) {
             console.log('Exit free.');
         }
     });
 
-    const landingOrdered = yState({
+    const landing_call = yState({
         handler(event) {
             switch (event.signal) {
                 case 'floor':
-                    floor = event.data;
-                    if (floor === order) {
+                    currentFloor = event.data;
+                    if (currentFloor === landingCall) {
                         console.log('in ordered floor');
-                        console.log('Transfer to in_floor');
                         sm.transfer(in_floor);
                     }
                     break;
@@ -53,11 +61,13 @@ var Lift = function() {
             }
         },
         entry(event) {
-            console.log('Enter landingOrdered.');
-            if (order > floor) {
+            console.log('Enter landing_call.');
+            state = 'landing_call';
+
+            if (landingCall > currentFloor) {
                 // Move up
                 console.log("Move up");
-            } else if (order < floor) {
+            } else if (landingCall < currentFloor) {
                 // Move down
                 console.log("Down up");
             } else {
@@ -67,113 +77,70 @@ var Lift = function() {
             }
         },
         exit(event) {
-            console.log('Exit landingOrdered.');
+            console.log('Exit landing_call.');
         }
     });
 
     const in_floor = yState({
         handler(event) {
             switch (event.signal) {
-                case 'enter':
-                    console.log('in_floor - enter (' + e.data + ')');
-                    persons = e.data;
-                    break;
-                case 'exit':
-                    console.log('in_floor - exit (0)');
-                    persons = 0;
-                    break;
-                case 'free': // change to timer check
-                    console.log('in_floor - free');
-                    console.log('Transfer to free');
-                    //return self.transfer(free);
                 case 'car_call':
-                    console.log('in_floor - order (' + e.data + ')');
-                    order = e.data;
-                    //return self.transfer(ordered);
+                    carCall = event.data;
+                    console.log('in_floor - car call to:' + carCall);
+                    sm.transfer(car_call);
                     break;
+                case 'no_operation':
+                    console.log('in_floor - no_operation');
+                    sm.transfer(free);
                 default:
                     break;
             }
         },
         entry(event) {
             console.log('Enter in_floor.');
+            state = 'in_floor';
+            timeoutId = setTimeout(noOperation, 3000);
         },
         exit(event) {
             console.log('Exit in_floor.');
+            clearTimeout(timeoutId);
         }
     });
 
-
-
-
-
+    const car_call = yState({
+        handler(event) {
+            switch (event.signal) {
+                case 'floor':
+                    currentFloor = event.data;
+                    if (currentFloor === carCall) {
+                        console.log('in ordered floor');
+                        sm.transfer(in_floor);
+                    }
+                    break;
+                default:
+                    break;
+            }
+        },
+        entry(event) {
+            console.log('Enter car_call.');
+            state = 'car_call';
+        },
+        exit(event) {
+            console.log('Exit car_call.');
+        }
+    });
 
     sm.init(free);
 
     return Object.freeze({
-        dispatch,
+        dispatch: sm.dispatch,
+        getState: () => state,
+        getCurrentFloor: () => currentFloor,
+        getLandingCall: () => landingCall,
+        getCarCall: () => carCall
     });
 
 };
 
 
-var lift = Lift();
-lift.dispatch({signal: "landing_call", data: 2});
-lift.dispatch({signal: "floor", data: 1});
-lift.dispatch({signal: "floor", data: 2});
-
-/*
-
-    var s21 = new QState(function(e) {
-        switch (e.signal) {
-            case 'tm:a':
-                console.log('s21 - a');
-                console.log('Self transfer to s21');
-                return self.transfer(s21);
-            case 'tm:g':
-                console.log('s21 - g');
-                console.log('Transfer to s11');
-                return self.transfer(s11);
-            case 'tm:b':
-                console.log('s21 - b');
-                console.log('Transfer to s211');
-                return self.transfer(s211);
-        }
-
-        return QHsm.unhandled();
-    }, s2, function() {
-        console.log('Enter s21.');
-    }, function() {
-        console.log('Exit s21.');
-    }, function() {
-        console.log('Init s21.');
-        console.log('Transfer to s211');
-        return self.transfer(s211);
-    });
-
-    var s211 = new QState(function(e) {
-        switch (e.signal) {
-            case 'tm:d':
-                console.log('s211 - d');
-                console.log('Transfer to s21');
-                return self.transfer(s21);
-            case 'tm:h':
-                console.log('s211 - h');
-                console.log('Transfer to s');
-                return self.transfer(s);
-        }
-
-        return QHsm.unhandled();
-    }, s21, function() {
-        console.log('Enter s211.');
-    }, function() {
-        console.log('Exit s211.');
-    });
-* /
-
-    QActive.call(self, initial);
-};
-
-
-
-*/
+module.exports.Lift = Lift;

@@ -5,6 +5,9 @@ const modbus = require("modbus-tcp");
 const modServer = new modbus.Server();
 const ExceptionCodes = modbus.Exceptions;
 
+const Lift = require('../Server/lift').Lift;
+
+/*
 const memory = {
   coils: {
     startAddr: 0x00,  // 0
@@ -85,3 +88,14 @@ tcpServer.on('connection', onConnection);
 tcpServer.listen(3000, () => {
   console.log('Server: Listening port 3000');
 });
+
+*/
+
+
+var lift = Lift();
+lift.dispatch({signal: "landing_call", data: 2});
+lift.dispatch({signal: "floor", data: 2});
+
+setTimeout(function(){
+    console.log("timeout");
+}, 5000);
