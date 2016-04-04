@@ -2,14 +2,14 @@
 
 const yFsm = require('ysm/lib/yfsm').yFsm;
 const yState = require('ysm/lib/yfsm').yState;
+const Motor = require('.//motor').Motor;
 
 
 var Lift = function() {
 
     const sm = yFsm();
-
+    const motor = Motor();
     let state = 'no_state';
-    let persons = 0;        // persons in lift
     let currentFloor = 0;   // current lift location
     let landingCall = 0;    // landing call to this floor
     let carCall = 0;        // car call to this floor
@@ -19,6 +19,11 @@ var Lift = function() {
     function noOperation() {
         sm.dispatch({signal: 'no_operation'});
     };
+
+    motor.onPosition((position) => {
+        sm.dispatch({signal: "floor", data: position});
+    });
+
 
     const free = yState({
         handler(event) {
@@ -67,9 +72,11 @@ var Lift = function() {
             if (landingCall > currentFloor) {
                 // Move up
                 console.log("Move up");
+                motor.dispatch({signal: "move_up"});
             } else if (landingCall < currentFloor) {
                 // Move down
-                console.log("Down up");
+                console.log("Move down");
+                motor.dispatch({signal: "move_up"});
             } else {
                 // already in floor
                 console.log('Already in floor, transfer to in_floor');
@@ -78,6 +85,7 @@ var Lift = function() {
         },
         exit(event) {
             console.log('Exit landing_call.');
+            motor.dispatch({signal: "stop"});
         }
     });
 
@@ -124,9 +132,24 @@ var Lift = function() {
         entry(event) {
             console.log('Enter car_call.');
             state = 'car_call';
+
+            if (carCall > currentFloor) {
+                // Move up
+                console.log("Move up");
+                motor.dispatch({signal: "move_up"});
+            } else if (carCall < currentFloor) {
+                // Move down
+                console.log("Move down");
+                motor.dispatch({signal: "move_up"});
+            } else {
+                // already in floor
+                console.log('Already in floor, transfer to in_floor');
+                sm.transfer(in_floor);
+            }
         },
         exit(event) {
             console.log('Exit car_call.');
+            motor.dispatch({signal: "stop"});
         }
     });
 

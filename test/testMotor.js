@@ -8,12 +8,12 @@ describe('Test Motor', function() {
 
     var motor = {};
 
+    before(function() {
+        motor = Motor();
+        motor.setPosTimeout(50);
+    });
 
     describe('#Start', function() {
-        before(function() {
-            motor = Motor();
-        });
-
         it('should be in \'stopped\' state ', function() {
             assert.strictEqual(motor.getState(), 'stopped');
         });
@@ -22,13 +22,9 @@ describe('Test Motor', function() {
         });
     });
 
-    describe('#Moving up', function() {
-        beforeEach(function() {
-            motor = Motor();
-        });
-
+    describe('#Move up', function() {
         it('should get increasing positions', function(done) {
-            this.timeout(7000);
+            this.timeout(1000);
             let pos = motor.getPosition();
 
             motor.onPosition((position) => {
@@ -39,113 +35,58 @@ describe('Test Motor', function() {
                 }
             });
             motor.dispatch({signal: "move_up"});
-
         });
-
-        describe('should stop moving', function() {
-
-            it('stop in position 3', function(done) {
-                this.timeout(2000);
-
-                motor.onPosition((position) => {
-                    if (position === 3) {
-                        motor.dispatch({signal: "stop"});
-                        done();
-                    }
-                });
-                motor.dispatch({signal: "move_up"});
-            });
-
-            it('should be in \'stopped\' state ', function() {
-                assert.strictEqual(motor.getState(), 'stopped');
-            });
-
+        it('should be in \'stopped\' state after position 10', function() {
+            assert.strictEqual(motor.getState(), 'stopped');
         });
-
-        /*
-        describe('first floor', function() {
-            before(function() {
-                lift.dispatch({signal: "floor", data: 1});
-            });
-
-            it('current floor should be 1', function() {
-                assert.strictEqual(lift.getCurrentFloor(), 1);
-            });
-            it('should be in \'landing_call\' state ', function() {
-                assert.strictEqual(lift.getState(), 'landing_call');
-            });
-        });
-
-        describe('call floor', function() {
-            before(function() {
-                lift.dispatch({signal: "floor", data: 2});
-            });
-
-            it('current floor should be 2', function() {
-                assert.strictEqual(lift.getCurrentFloor(), 2);
-            });
-            it('should be in \'in_floor\' state ', function() {
-                assert.strictEqual(lift.getState(), 'in_floor');
-            });
-
-
-        });
-        */
     });
 
-/*
-    describe('#in landing floor', function() {
-        before(function() {
-            lift = Lift();
-            lift.dispatch({signal: "landing_call", data: 2});
-            lift.dispatch({signal: "floor", data: 2});
-            lift.dispatch({signal: "car_call", data: 5});
-        });
+    describe('#Moving down', function() {
+        it('should get decreasing positions', function(done) {
+            this.timeout(1000);
+            let pos = motor.getPosition();
 
-        it('car call should be 5', function() {
-            assert.strictEqual(lift.getCurrentFloor(), 2);
+            motor.onPosition((position) => {
+                assert.strictEqual(pos - position, 1);
+                pos = position;
+                if (pos === 0) {
+                    done();
+                }
+            });
+            motor.dispatch({signal: "move_down"});
         });
-        it('should be in \'car_call\' state ', function() {
-            assert.strictEqual(lift.getState(), 'car_call');
+        it('should be in \'stopped\' state after position 0', function() {
+            assert.strictEqual(motor.getState(), 'stopped');
         });
-
     });
 
-    describe('#car call', function() {
-        before(function() {
-            lift = Lift();
-            lift.dispatch({signal: "landing_call", data: 2});
-            lift.dispatch({signal: "floor", data: 2});
-            lift.dispatch({signal: "car_call", data: 4});
+    describe('#stop moving', function() {
+        it('stop in position 5', function(done) {
+            this.timeout(1000);
+            motor.onPosition((position) => {
+                if (position === 5) {
+                    motor.dispatch({signal: "stop"});
+                    done();
+                }
+            });
+            motor.dispatch({signal: "move_up"});
         });
-
-        describe('3rd floor', function() {
-            before(function() {
-                lift.dispatch({signal: "floor", data: 3});
-            });
-
-            it('current floor should be 3', function() {
-                assert.strictEqual(lift.getCurrentFloor(), 3);
-            });
-            it('should be in \'car_call\' state ', function() {
-                assert.strictEqual(lift.getState(), 'car_call');
-            });
+        it('should be in \'stopped\' state ', function() {
+            assert.strictEqual(motor.getState(), 'stopped');
         });
-
-        describe('call floor', function() {
-            before(function() {
-                lift.dispatch({signal: "floor", data: 4});
+        it('stop in position 2', function(done) {
+            this.timeout(1000);
+            motor.onPosition((position) => {
+                if (position === 2) {
+                    motor.dispatch({signal: "stop"});
+                    done();
+                }
             });
-
-            it('current floor should be 4', function() {
-                assert.strictEqual(lift.getCurrentFloor(), 4);
-            });
-            it('should be in \'in_floor\' state ', function() {
-                assert.strictEqual(lift.getState(), 'in_floor');
-            });
+            motor.dispatch({signal: "move_down"});
         });
-
+        it('should be in \'stopped\' state ', function() {
+            assert.strictEqual(motor.getState(), 'stopped');
+        });
     });
-*/
 
 });

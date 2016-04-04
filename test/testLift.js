@@ -16,9 +16,6 @@ describe('Test Lift', function() {
         it('should be in \'free\' state ', function() {
             assert.strictEqual(lift.getState(), 'free');
         });
-        it('there should be 0 persons in ', function() {
-            assert.strictEqual(lift.getPersons(), 0);
-        });
         it('current floor should be 0', function() {
             assert.strictEqual(lift.getCurrentFloor(), 0);
         });
@@ -48,7 +45,7 @@ describe('Test Lift', function() {
                 assert.strictEqual(lift.getState(), 'landing_call');
             });
         });
-
+/*
         describe('first floor', function() {
             before(function() {
                 lift.dispatch({signal: "floor", data: 1});
@@ -61,11 +58,13 @@ describe('Test Lift', function() {
                 assert.strictEqual(lift.getState(), 'landing_call');
             });
         });
-
+*/
         describe('call floor', function() {
-            before(function() {
-                lift.dispatch({signal: "floor", data: 2});
-            });
+            //before(function() {
+            //    lift.dispatch({signal: "floor", data: 2});
+            //});
+
+
 
             it('current floor should be 2', function() {
                 assert.strictEqual(lift.getCurrentFloor(), 2);
@@ -73,12 +72,9 @@ describe('Test Lift', function() {
             it('should be in \'in_floor\' state ', function() {
                 assert.strictEqual(lift.getState(), 'in_floor');
             });
-
-
         });
-
     });
-
+/*
     describe('#in landing floor', function() {
         before(function() {
             lift = Lift();
@@ -131,5 +127,5 @@ describe('Test Lift', function() {
         });
 
     });
-
+*/
 });

@@ -93,8 +93,8 @@ tcpServer.listen(3000, () => {
 
 
 var lift = Lift();
-lift.dispatch({signal: "landing_call", data: 2});
-lift.dispatch({signal: "floor", data: 2});
+lift.dispatch({signal: "landing_call", data: 5});
+//lift.dispatch({signal: "floor", data: 2});
 
 setTimeout(function(){
     console.log("timeout");
