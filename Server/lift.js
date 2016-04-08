@@ -20,7 +20,7 @@ var Lift = function() {
         sm.dispatch({signal: 'no_operation'});
     };
 
-    motor.onPosition((position) => {
+    motor.emitter.on('pos', (position) => {
         sm.dispatch({signal: "floor", data: position});
     });
 

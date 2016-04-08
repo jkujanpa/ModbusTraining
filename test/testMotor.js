@@ -13,6 +13,11 @@ describe('Test Motor', function() {
         motor.setPosTimeout(50);
     });
 
+    afterEach(function() {
+        motor.emitter.removeAllListeners('pos');
+    })
+
+
     describe('#Start', function() {
         it('should be in \'stopped\' state ', function() {
             assert.strictEqual(motor.getState(), 'stopped');
@@ -24,10 +29,10 @@ describe('Test Motor', function() {
 
     describe('#Move up', function() {
         it('should get increasing positions', function(done) {
-            this.timeout(1000);
+            this.timeout(5000);
             let pos = motor.getPosition();
 
-            motor.onPosition((position) => {
+            motor.emitter.on('pos', (position) => {
                 assert.strictEqual(position - pos, 1);
                 pos = position;
                 if (pos === 10) {
@@ -43,10 +48,10 @@ describe('Test Motor', function() {
 
     describe('#Moving down', function() {
         it('should get decreasing positions', function(done) {
-            this.timeout(1000);
+            this.timeout(5000);
             let pos = motor.getPosition();
 
-            motor.onPosition((position) => {
+            motor.emitter.on('pos', (position) => {
                 assert.strictEqual(pos - position, 1);
                 pos = position;
                 if (pos === 0) {
@@ -62,8 +67,8 @@ describe('Test Motor', function() {
 
     describe('#stop moving', function() {
         it('stop in position 5', function(done) {
-            this.timeout(1000);
-            motor.onPosition((position) => {
+            this.timeout(5000);
+            motor.emitter.on('pos', (position) => {
                 if (position === 5) {
                     motor.dispatch({signal: "stop"});
                     done();
@@ -71,12 +76,13 @@ describe('Test Motor', function() {
             });
             motor.dispatch({signal: "move_up"});
         });
-        it('should be in \'stopped\' state ', function() {
+        it('should be in \'stopped\' state at position 5 ', function() {
             assert.strictEqual(motor.getState(), 'stopped');
+            assert.strictEqual(motor.getPosition(), 5);
         });
         it('stop in position 2', function(done) {
-            this.timeout(1000);
-            motor.onPosition((position) => {
+            this.timeout(5000);
+            motor.emitter.on('pos', (position) => {
                 if (position === 2) {
                     motor.dispatch({signal: "stop"});
                     done();
@@ -84,8 +90,9 @@ describe('Test Motor', function() {
             });
             motor.dispatch({signal: "move_down"});
         });
-        it('should be in \'stopped\' state ', function() {
+        it('should be in \'stopped\' state at position 2', function() {
             assert.strictEqual(motor.getState(), 'stopped');
+            assert.strictEqual(motor.getPosition(), 2);
         });
     });
 

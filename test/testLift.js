@@ -5,10 +5,9 @@ const assert = require('assert');
 
 describe('Test Lift', function() {
 
-    var lift = {};
-
-
     describe('#Start', function() {
+        var lift = {};
+
         before(function() {
             lift = Lift();
         });
@@ -28,12 +27,14 @@ describe('Test Lift', function() {
     });
 
 
-    describe('#Landing call', function() {
+    describe('#call', function() {
+        var lift = {};
+
         before(function() {
             lift = Lift();
         });
 
-        describe('call', function() {
+        describe('#Landing call', function() {
             before(function() {
                 lift.dispatch({signal: "landing_call", data: 2});
             });
@@ -44,88 +45,36 @@ describe('Test Lift', function() {
             it('should be in \'landing_call\' state ', function() {
                 assert.strictEqual(lift.getState(), 'landing_call');
             });
+            it('should be at landing floor and in \'in_floor\' state ', function(done) {
+                this.timeout(500);
+                setTimeout(function() {
+                    assert.strictEqual(lift.getCurrentFloor(), lift.getLandingCall());
+                    assert.strictEqual(lift.getState(), 'in_floor');
+                    done();
+                }, 400);
+            });
         });
-/*
-        describe('first floor', function() {
+
+        describe('#car call', function() {
             before(function() {
-                lift.dispatch({signal: "floor", data: 1});
+                lift.dispatch({signal: "car_call", data: 4});
             });
 
-            it('current floor should be 1', function() {
-                assert.strictEqual(lift.getCurrentFloor(), 1);
-            });
-            it('should be in \'landing_call\' state ', function() {
-                assert.strictEqual(lift.getState(), 'landing_call');
-            });
-        });
-*/
-        describe('call floor', function() {
-            //before(function() {
-            //    lift.dispatch({signal: "floor", data: 2});
-            //});
-
-
-
-            it('current floor should be 2', function() {
-                assert.strictEqual(lift.getCurrentFloor(), 2);
-            });
-            it('should be in \'in_floor\' state ', function() {
-                assert.strictEqual(lift.getState(), 'in_floor');
-            });
-        });
-    });
-/*
-    describe('#in landing floor', function() {
-        before(function() {
-            lift = Lift();
-            lift.dispatch({signal: "landing_call", data: 2});
-            lift.dispatch({signal: "floor", data: 2});
-            lift.dispatch({signal: "car_call", data: 5});
-        });
-
-        it('car call should be 5', function() {
-            assert.strictEqual(lift.getCurrentFloor(), 2);
-        });
-        it('should be in \'car_call\' state ', function() {
-            assert.strictEqual(lift.getState(), 'car_call');
-        });
-
-    });
-
-    describe('#car call', function() {
-        before(function() {
-            lift = Lift();
-            lift.dispatch({signal: "landing_call", data: 2});
-            lift.dispatch({signal: "floor", data: 2});
-            lift.dispatch({signal: "car_call", data: 4});
-        });
-
-        describe('3rd floor', function() {
-            before(function() {
-                lift.dispatch({signal: "floor", data: 3});
-            });
-
-            it('current floor should be 3', function() {
-                assert.strictEqual(lift.getCurrentFloor(), 3);
+            it('car call floor should be 4', function() {
+                assert.strictEqual(lift.getCarCall(), 4);
             });
             it('should be in \'car_call\' state ', function() {
                 assert.strictEqual(lift.getState(), 'car_call');
             });
-        });
-
-        describe('call floor', function() {
-            before(function() {
-                lift.dispatch({signal: "floor", data: 4});
-            });
-
-            it('current floor should be 4', function() {
-                assert.strictEqual(lift.getCurrentFloor(), 4);
-            });
-            it('should be in \'in_floor\' state ', function() {
-                assert.strictEqual(lift.getState(), 'in_floor');
+            it('should be at called floor and in \'in_floor\' state ', function(done) {
+                this.timeout(500);
+                setTimeout(function() {
+                    assert.strictEqual(lift.getCurrentFloor(), lift.getCarCall());
+                    assert.strictEqual(lift.getState(), 'in_floor');
+                    done();
+                }, 400);
             });
         });
-
     });
-*/
+
 });

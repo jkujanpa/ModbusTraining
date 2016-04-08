@@ -1,16 +1,19 @@
 "use strict"
 
+
+const EventEmitter = require('events').EventEmitter;
 const yFsm = require('ysm/lib/yfsm').yFsm;
 const yState = require('ysm/lib/yfsm').yState;
 
 
 var Motor = function() {
     const sm = yFsm();
+    const emitter = new EventEmitter();
     let positionTimeout = 50;
     let onPositionCB = null;
     let state = 'no_state';
     let position = 0;
-    let timeoutId;
+    let timeoutId = 0;
 
     function signalPosition() {
         //console.log('signal position');
@@ -29,15 +32,16 @@ var Motor = function() {
                     sm.transfer(running_down);
                     break;
                 default:
+                    //console.log('!!! stopped - Unhandled signal: ' + event.signal);
                     break;
             }
         },
         entry(event) {
-            //console.log('Enter stopped');
+            //console.log('Motor: Enter stopped');
             state = 'stopped';
         },
         exit(event) {
-            //console.log('Exit stopped');
+            //console.log('Motor: Exit stopped');
         }
     });
 
@@ -47,10 +51,11 @@ var Motor = function() {
                 case 'stop':
                     //console.log('running_up - stop');
                     sm.transfer(stopped);
+                    break;
                 case 'position':
                     position += 1;
-                    //console.log('running_up - position:' + position);
-                    onPositionCB(position);
+                    //console.log('Motor: running_up - position:' + position);
+                    process.nextTick(() => {emitter.emit('pos', position)});
                     timeoutId = setTimeout(signalPosition, positionTimeout);
                     if (position >= 10) {
                         //console.log('in top position');
@@ -59,16 +64,17 @@ var Motor = function() {
                     }
                     break;
                 default:
+                    //console.log('!!! running_up - Unhandled signal: ' + event.signal);
                     break;
             }
         },
         entry(event) {
-            //console.log('Enter running_up');
+            //console.log('Motor: Enter running_up');
             state = 'running_up';
             timeoutId = setTimeout(signalPosition, positionTimeout);
         },
         exit(event) {
-            //console.log('Exit running_up');
+            //console.log('Motor: Exit running_up');
             clearTimeout(timeoutId);
         }
     });
@@ -77,12 +83,13 @@ var Motor = function() {
         handler(event) {
             switch (event.signal) {
                 case 'stop':
-                    //console.log('running_down - stop');
+                    //console.log('running_down - stop ' + new Date().getTime());
                     sm.transfer(stopped);
+                    break;
                 case 'position':
                     position -= 1;
-                    //console.log('running_down - position:' + position);
-                    onPositionCB(position);
+                    //console.log('Motor: running_down - position:' + position);
+                    process.nextTick(() => {emitter.emit('pos', position)});
                     timeoutId = setTimeout(signalPosition, positionTimeout);
                     if (position <= 0) {
                         //console.log('in bottom position');
@@ -91,16 +98,17 @@ var Motor = function() {
                     }
                     break;
                 default:
+                    //console.log('!!! running_down - Unhandled signal: ' + event.signal);
                     break;
             }
         },
         entry(event) {
-            //console.log('Enter running_down');
+            //console.log('Motor: Enter running_down');
             state = 'running_down';
             timeoutId = setTimeout(signalPosition, positionTimeout);
         },
         exit(event) {
-            //console.log('Exit running_down');
+            //console.log('Motor: Exit running_down ' + new Date().getTime());
             clearTimeout(timeoutId);
         }
     });
@@ -108,6 +116,7 @@ var Motor = function() {
     sm.init(stopped);
 
     return Object.freeze({
+        emitter,
         dispatch: sm.dispatch,
         onPosition: (cb) => {onPositionCB = cb},
         getState: () => state,
