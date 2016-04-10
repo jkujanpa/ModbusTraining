@@ -1,10 +1,10 @@
 {
   "dependencies": {
-    "jsmodbus": "^0.5.1",
+    "jsmodbus": "^1.0.3",
     "modbus-tcp": "^0.4.4",
     "ysm": "https://github.com/jkujanpa/ysm.git#master"
   },
   "devDependencies": {
-      "mocha": "^2.4.5"
+    "mocha": "^2.4.5"
   }
 }

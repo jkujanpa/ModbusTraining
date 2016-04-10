@@ -1,5 +1,6 @@
 "use strict"
 
+const EventEmitter = require('events').EventEmitter;
 const yFsm = require('ysm/lib/yfsm').yFsm;
 const yState = require('ysm/lib/yfsm').yState;
 const Motor = require('.//motor').Motor;
@@ -9,6 +10,7 @@ var Lift = function() {
 
     const sm = yFsm();
     const motor = Motor();
+    const emitter = new EventEmitter();
     let state = 'no_state';
     let currentFloor = 0;   // current lift location
     let landingCall = 0;    // landing call to this floor
@@ -22,6 +24,7 @@ var Lift = function() {
 
     motor.emitter.on('pos', (position) => {
         sm.dispatch({signal: "floor", data: position});
+        emitter.emit('floor', position);
     });
 
 
@@ -156,6 +159,7 @@ var Lift = function() {
     sm.init(free);
 
     return Object.freeze({
+        emitter,
         dispatch: sm.dispatch,
         getState: () => state,
         getCurrentFloor: () => currentFloor,

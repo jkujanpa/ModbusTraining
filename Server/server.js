@@ -9,42 +9,42 @@ const Lift = require('../Server/lift').Lift;
 
 
 const memory = {
-  coils: {
-    startAddr: 0x00,  // 0
-    endAddr: 0x17,    // 23 ==> 24 bits
-    data: new Buffer(100)
-  },
-  discreteInputs: {
-    startAddr: 0x00,  // 0
-    endAddr: 0x17,    // 23 ==> 24 bits
-    data: new Buffer(100)
-  }
+    coils: {
+        startAddr: 0x00,  // 0
+        endAddr: 0x17,    // 23 ==> 24 bits
+        data: new Buffer(100)
+    },
+    discreteInputs: {
+        startAddr: 0x00,  // 0
+        endAddr: 0x17,    // 23 ==> 24 bits
+        data: new Buffer(100)
+    }
 }
 
 
-modServer.on("read-coils", (from, to, reply) => {
-  console.log('Server: read-coils from ' + from + ' to ' + to);
-  if ((to - from) > memory.coils.endAddr) {
-    console.log('Server: Error ' + ExceptionCodes.ILLEGAL_DATA_VALUE);
-    return reply(ExceptionCodes.ILLEGAL_DATA_VALUE, null)
-  }
+modServer.on("read-coils", (from, count, reply) => {
+    console.log('Server: read %d coils from %d', count, from);
+    if ((count - from) > memory.coils.endAddr) {
+        console.log('Server: Error ' + ExceptionCodes.ILLEGAL_DATA_VALUE);
+        return reply(ExceptionCodes.ILLEGAL_DATA_VALUE, null)
+    }
 
-  memory.coils.data[0] = 1;
-  memory.coils.data[1] = 1;
-  memory.coils.data[2] = 1;
-  memory.coils.data[3] = 1;
-  memory.coils.data[4] = 1;
-  memory.coils.data[5] = 0;
-  memory.coils.data[6] = 1;
+    memory.coils.data[0] = 1;
+    memory.coils.data[1] = 1;
+    memory.coils.data[2] = 1;
+    memory.coils.data[3] = 1;
+    memory.coils.data[4] = 1;
+    memory.coils.data[5] = 0;
+    memory.coils.data[6] = 1;
 
-
-  const coils = memory.coils.data;
-  return reply(null, coils.slice(from, to+1));
+    const coils = memory.coils.data;
+    return reply(null, coils.slice(from, count-1));
 });
 
 modServer.on("write-single-coil", (address, value, reply) => {
-  console.log('Server: write-single-coil');
-  return reply(null, [ 1, 0, 1, 1 ]);
+    console.log('Server: write-single-coil ' + address + ':' + value[0]);
+    //return reply(null, [ 1, 0, 1, 1 ]);
+    return reply(ExceptionCodes.ILLEGAL_DATA_VALUE, null)
 });
 
 

@@ -6,7 +6,7 @@ const yFsm = require('ysm/lib/yfsm').yFsm;
 const yState = require('ysm/lib/yfsm').yState;
 
 
-var Motor = function() {
+var Motor = function() {term
     const sm = yFsm();
     const emitter = new EventEmitter();
     let positionTimeout = 50;
@@ -118,7 +118,6 @@ var Motor = function() {
     return Object.freeze({
         emitter,
         dispatch: sm.dispatch,
-        onPosition: (cb) => {onPositionCB = cb},
         getState: () => state,
         getPosition: () => position,
         setPosTimeout: (tm) => {positionTimeout = tm}

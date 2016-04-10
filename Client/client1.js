@@ -3,25 +3,66 @@
 const net = require('net');
 const modbus = require("modbus-tcp");
 const modClient = new modbus.Client();
+const readline = require('readline');
 
 
 
 const tcpClient = net.connect(3000, 'localhost', () => {
-   //'connect' listener
-  console.log('Client: Connected to server!');
+    console.log('Connected to Modbus server!');
 
-  //tcpClient.pipe(modClient).pipe(tcpClient);
-  //tcpClient.pipe(modClient);
-  modClient.pipe(tcpClient);
+    //
+    modClient.pipe(tcpClient);
 
-  console.log('Client: readCoils 0 - 3000');
-  modClient.readCoils(0, 0, 5, function (err, coils) {
-    if (err) {
-      console.log('Client: Read Error: ' + err);
-      return;
+    /*
+    modClient.writeSingleCoil(0, 0, 5, 1); , function (err, coils) {
+        if (err) {
+            console.log('Client: Read Error: ' + err);
+            return;
+        }
+        console.log('Client: coil 5 written');
+    });
+    */
+
+    function completer(line) {
+        let completions = 'ReadCoils WriteSingleCoil WriteMultipleCoils'.split(' ');
+        let hits = completions.filter((c) => { return c.indexOf(line) == 0 });
+        // show all completions if none found
+        return [hits.length ? hits : completions, line]
     }
-    console.log('Client: coils read: ' + coils);
-  });
+
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+        completer: completer
+    });
+
+
+    rl.setPrompt('MOD> ');
+    rl.prompt();
+
+    rl.on('line', (line) => {
+        let cmd = line.split(' ');
+        switch(cmd[0].trim()) {
+            case 'ReadCoils':
+                let addr = cmd[1] ? Number(cmd[1]) : 0;
+                let length = cmd[2] ? Number(cmd[2]) : 0;
+                modClient.readCoils(0, addr, length, function (err, coils) {
+                    if (err) {
+                        console.log('Read Error: ' + err);
+                        return;
+                    }
+                    console.log('Coils read: ' + coils);
+                });
+                break;
+            default:
+                console.log('Say what? I might have heard `' + line.trim() + '`');
+                break;
+        }
+        rl.prompt();
+    }).on('close', () => {
+        console.log('Have a great day!');
+        process.exit(0);
+    });
 
 });
 
@@ -36,6 +77,13 @@ tcpClient.on('data', (data) => {
 });
 */
 
+/*
 tcpClient.on('end', () => {
   console.log('Client: disconnected from server');
+});
+*/
+
+
+tcpClient.on('error', (err) => {
+    console.log(err);
 });
