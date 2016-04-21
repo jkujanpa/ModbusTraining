@@ -26,6 +26,30 @@ describe('Test Lift', function() {
         });
     });
 
+    describe('#enter/Exit', function() {
+        var lift = {};
+
+        before(function() {
+            lift = Lift();
+        });
+
+        it('should not enter the lift in wrong floor', function() {
+            lift.dispatch({signal: "enter", data: 2});
+            assert.strictEqual(lift.getState(), 'free');
+        });
+
+        it('should enter the lift in correct floor', function() {
+            lift.dispatch({signal: "enter", data: 0});
+            assert.strictEqual(lift.getState(), 'entered');
+        });
+
+        it('should exit the lift', function() {
+            lift.dispatch({signal: "exit"});
+            assert.strictEqual(lift.getState(), 'free');
+        });
+
+    });
+
 
     describe('#call', function() {
         var lift = {};
@@ -50,6 +74,8 @@ describe('Test Lift', function() {
                 setTimeout(function() {
                     assert.strictEqual(lift.getCurrentFloor(), lift.getLandingCall());
                     assert.strictEqual(lift.getState(), 'in_floor');
+                    lift.dispatch({signal: "enter", data: 2});
+                    assert.strictEqual(lift.getState(), 'entered');
                     done();
                 }, 400);
             });
@@ -70,7 +96,9 @@ describe('Test Lift', function() {
                 this.timeout(500);
                 setTimeout(function() {
                     assert.strictEqual(lift.getCurrentFloor(), lift.getCarCall());
-                    assert.strictEqual(lift.getState(), 'in_floor');
+                    assert.strictEqual(lift.getState(), 'entered');
+                    lift.dispatch({signal: "exit"});
+                    assert.strictEqual(lift.getState(), 'free');
                     done();
                 }, 400);
             });

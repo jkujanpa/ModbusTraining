@@ -3,7 +3,7 @@
 const EventEmitter = require('events').EventEmitter;
 const yFsm = require('ysm/lib/yfsm').yFsm;
 const yState = require('ysm/lib/yfsm').yState;
-const Motor = require('.//motor').Motor;
+const Motor = require('./motor').Motor;
 
 
 var Lift = function() {
@@ -36,10 +36,12 @@ var Lift = function() {
                     console.log('free - landing call to:' + landingCall);
                     sm.transfer(landing_call);
                     break;
-                case 'car_call':
-                    carCall = event.data;
-                    console.log('in_floor - car call to:' + carCall);
-                    sm.transfer(car_call);
+                case 'enter':
+                    let floor = event.data;
+                    console.log('free - try to enter lift in floor:' + floor);
+                    if (floor === currentFloor) {
+                        sm.transfer(entered);
+                    }
                     break;
                 default:
                     break;
@@ -48,9 +50,36 @@ var Lift = function() {
         entry(event) {
             console.log('Enter free.');
             state = 'free';
+            //process.nextTick(() => {emitter.emit('pos', position)});
         },
         exit(event) {
             console.log('Exit free.');
+            //process.nextTick(() => {emitter.emit('pos', position)});
+        }
+    });
+
+    const entered = yState({
+        handler(event) {
+            switch (event.signal) {
+                case 'car_call':
+                    carCall = event.data;
+                    console.log('entered - car call to:' + carCall);
+                    sm.transfer(car_call);
+                    break;
+                case 'exit':
+                    console.log('entered - exit lift');
+                    sm.transfer(free);
+                    break;
+                default:
+                    break;
+            }
+        },
+        entry(event) {
+            console.log('Enter entered.');
+            state = 'entered';
+        },
+        exit(event) {
+            console.log('Exit entered.');
         }
     });
 
@@ -79,11 +108,11 @@ var Lift = function() {
             } else if (landingCall < currentFloor) {
                 // Move down
                 console.log("Move down");
-                motor.dispatch({signal: "move_up"});
+                motor.dispatch({signal: "move_down"});
             } else {
                 // already in floor
                 console.log('Already in floor, transfer to in_floor');
-                sm.transfer(in_floor);
+                // !!!!! sm.transfer(in_floor);
             }
         },
         exit(event) {
@@ -95,14 +124,16 @@ var Lift = function() {
     const in_floor = yState({
         handler(event) {
             switch (event.signal) {
-                case 'car_call':
-                    carCall = event.data;
-                    console.log('in_floor - car call to:' + carCall);
-                    sm.transfer(car_call);
-                    break;
                 case 'no_operation':
                     console.log('in_floor - no_operation');
                     sm.transfer(free);
+                case 'enter':
+                    let floor = event.data;
+                    console.log('free - try to enter lift in floor:' + floor);
+                    if (floor === currentFloor) {
+                        sm.transfer(entered);
+                    }
+                    break;
                 default:
                     break;
             }
@@ -110,7 +141,7 @@ var Lift = function() {
         entry(event) {
             console.log('Enter in_floor.');
             state = 'in_floor';
-            timeoutId = setTimeout(noOperation, 3000);
+            timeoutId = setTimeout(noOperation, 5000);
         },
         exit(event) {
             console.log('Exit in_floor.');
@@ -125,7 +156,7 @@ var Lift = function() {
                     currentFloor = event.data;
                     if (currentFloor === carCall) {
                         console.log('in ordered floor');
-                        sm.transfer(in_floor);
+                        sm.transfer(entered);
                     }
                     break;
                 default:
@@ -147,7 +178,7 @@ var Lift = function() {
             } else {
                 // already in floor
                 console.log('Already in floor, transfer to in_floor');
-                sm.transfer(in_floor);
+                // !!!!! sm.transfer(entered);
             }
         },
         exit(event) {
@@ -157,6 +188,7 @@ var Lift = function() {
     });
 
     sm.init(free);
+    //motor.setPosTimeout(2000);
 
     return Object.freeze({
         emitter,

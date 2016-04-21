@@ -13,18 +13,13 @@ const tcpClient = net.connect(3000, 'localhost', () => {
     //
     modClient.pipe(tcpClient);
 
-    /*
-    modClient.writeSingleCoil(0, 0, 5, 1); , function (err, coils) {
-        if (err) {
-            console.log('Client: Read Error: ' + err);
-            return;
-        }
-        console.log('Client: coil 5 written');
-    });
-    */
 
     function completer(line) {
-        let completions = 'ReadCoils WriteSingleCoil WriteMultipleCoils'.split(' ');
+        let completions = 'rc read-coils' +
+                'rdi read-discrete-inputs' +
+                'wsc write-single-coil' +
+                'wmc write-multiple-coils' +
+                'help'.split(' ');
         let hits = completions.filter((c) => { return c.indexOf(line) == 0 });
         // show all completions if none found
         return [hits.length ? hits : completions, line]
@@ -37,28 +32,88 @@ const tcpClient = net.connect(3000, 'localhost', () => {
     });
 
 
-    rl.setPrompt('MOD> ');
+    rl.setPrompt('Modbus> ');
     rl.prompt();
 
     rl.on('line', (line) => {
         let cmd = line.split(' ');
         switch(cmd[0].trim()) {
-            case 'ReadCoils':
-                let addr = cmd[1] ? Number(cmd[1]) : 0;
-                let length = cmd[2] ? Number(cmd[2]) : 0;
-                modClient.readCoils(0, addr, length, function (err, coils) {
+            case 'rc':
+            case 'read-coils': {
+                let from = cmd[1] ? Number(cmd[1]) : 0;
+                let to = cmd[2] ? Number(cmd[2]) : 0;
+                modClient.readCoils(0, from, to, function (err, coils) {
                     if (err) {
                         console.log('Read Error: ' + err);
                         return;
                     }
                     console.log('Coils read: ' + coils);
+                    rl.prompt();
                 });
                 break;
+            }
+            case 'rdi':
+            case 'read-discrete-inputs': {
+                let from = cmd[1] ? Number(cmd[1]) : 0;
+                let to = cmd[2] ? Number(cmd[2]) : 0;
+                modClient.readDiscreteInputs(0, from, to, function (err, inputs) {
+                    if (err) {
+                        console.log('Read Error: ' + err);
+                        return;
+                    }
+                    console.log('Inputs read: ' + inputs);
+                    rl.prompt();
+                });
+                break;
+            }
+            case 'wsc':
+            case 'write-single-coil': {
+                let addr = cmd[1] ? Number(cmd[1]) : 0;
+                let value = cmd[2] ? Number(cmd[2]) : 0;
+                modClient.writeSingleCoil(0, addr, value, function (err) {
+                    if (err) {
+                        console.log('Client: Write Error: ' + err);
+                        return;
+                    }
+                    console.log('Client: coil %d written', addr);
+                    rl.prompt();
+                });
+                break;
+            }
+            case 'wmc':
+            case 'write-multiple-coils': {
+                let from = cmd[1] ? Number(cmd[1]) : 0;
+                let to = cmd[2] ? Number(cmd[2]) : 0;
+                let strVals = cmd[3] ? cmd.slice(3, (to - from + 3 + 1)) : ['0'];
+
+                let values = strVals.map(function(num) {
+                  return Number(num);
+                });
+                //console.log(values);
+
+                modClient.writeMultipleCoils(0, from, to, values, function (err) {
+                    if (err) {
+                        console.log('Client: Write Error: ' + err);
+                        return;
+                    }
+                    console.log('Client: coil %d written', from);
+                    rl.prompt();
+                });
+                break;
+            }
+            case 'help': {
+                console.log('rc,  read-coils            from(=0) to(=0)');
+                console.log('rdi, read-discrete-inputs  from(=0) to(=0)');
+                console.log('wsc, write-single-coil     address(=0) value(=0)');
+                console.log('wmc, write-multiple-coils  from(=0) to(=0) values');
+                rl.prompt();
+                break;
+            }
             default:
-                console.log('Say what? I might have heard `' + line.trim() + '`');
+                console.log('Say what? ...`' + line.trim() + '`');
+                rl.prompt();
                 break;
         }
-        rl.prompt();
     }).on('close', () => {
         console.log('Have a great day!');
         process.exit(0);

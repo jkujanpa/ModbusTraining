@@ -5,95 +5,91 @@ const modbus = require("modbus-tcp");
 const modServer = new modbus.Server();
 const ExceptionCodes = modbus.Exceptions;
 
-const Lift = require('../Server/lift').Lift;
+const lift = require('../Server/lift').Lift();
+
+const COIL_COUNT = 24;
+const DINPUT_COUNT = 24;
+const INPUT_REG_COUNT = 24;
 
 
 const memory = {
     coils: {
-        startAddr: 0x00,  // 0
-        endAddr: 0x17,    // 23 ==> 24 bits
-        data: new Buffer(100)
+        startAddr: 0,
+        endAddr: COIL_COUNT - 1,
+        data: new Buffer(COIL_COUNT)
     },
     discreteInputs: {
-        startAddr: 0x00,  // 0
-        endAddr: 0x17,    // 23 ==> 24 bits
-        data: new Buffer(100)
+        startAddr: 0,
+        endAddr: DINPUT_COUNT - 1,
+        data: new Buffer(DINPUT_COUNT)
+    },
+    inputRegisters: {
+        startAddr: 0,
+        endAddr: INPUT_REG_COUNT * 2 - 2,
+        data: new Buffer(INPUT_REG_COUNT * 2)
     }
 }
 
+memory.coils.data.fill(0);
+memory.discreteInputs.data.fill(0);
+memory.inputRegisters.data.fill(0);
 
-modServer.on("read-coils", (from, count, reply) => {
-    console.log('Server: read %d coils from %d', count, from);
-    if ((count - from) > memory.coils.endAddr) {
+lift.emitter.on('floor', (floor) => {
+    console.log('Server: lift in %d:th floor', floor);
+    memory.inputRegisters.data.writeUInt16BE(floor, 0);
+});
+
+modServer.on("read-coils", (from, to, reply) => {
+    console.log('Server: read coils from %d to %d ', from, to);
+    /*if ((count - from) > memory.coils.endAddr) {
         console.log('Server: Error ' + ExceptionCodes.ILLEGAL_DATA_VALUE);
         return reply(ExceptionCodes.ILLEGAL_DATA_VALUE, null)
-    }
+    }*/
 
-    memory.coils.data[0] = 1;
-    memory.coils.data[1] = 1;
-    memory.coils.data[2] = 1;
-    memory.coils.data[3] = 1;
-    memory.coils.data[4] = 1;
-    memory.coils.data[5] = 0;
-    memory.coils.data[6] = 1;
+    const coils = memory.coils.data.slice(from, to + 1);
+    console.log(coils);
 
-    const coils = memory.coils.data;
-    return reply(null, coils.slice(from, count-1));
+    return reply(null, coils);
+});
+
+modServer.on("read-discrete-inputs", (from, to, reply) => {
+    console.log('Server: read discrete inputs from %d to %d ', from, to);
+    /*if ((count - from) > memory.coils.endAddr) {
+        console.log('Server: Error ' + ExceptionCodes.ILLEGAL_DATA_VALUE);
+        return reply(ExceptionCodes.ILLEGAL_DATA_VALUE, null)
+    }*/
+
+    const inputs = memory.discreteInputs.data.slice(from, to + 1);
+    console.log(inputs);
+
+    return reply(null, inputs);
 });
 
 modServer.on("write-single-coil", (address, value, reply) => {
     console.log('Server: write-single-coil ' + address + ':' + value[0]);
-    //return reply(null, [ 1, 0, 1, 1 ]);
-    return reply(ExceptionCodes.ILLEGAL_DATA_VALUE, null)
+    memory.coils.data[address] = value[0];
+
+    if (address >= 0 && address <= 5 && value[0]) {
+        lift.dispatch({signal: "landing_call", data: address});
+    }
+    if (address >= 6 && address <= 11 && value[0]) {
+        lift.dispatch({signal: "car_call", data: address});
+    }
+
+    return reply(null);
+});
+
+modServer.on("write-multiple-coils", (from, to, values, reply) => {
+    console.log('Server: write-multiple-coils ' + values);
+    return reply(null);
 });
 
 
-
-/*
-modServer.on("read-discrete-inputs", (from, to, reply) => {
-  console.log('Server: read-discrete-inputs');
-  const inputs = memory.discreteInputs.data;
-  return reply(null, inputs.slice(from, to));
-});
-
-modServer.on("read-input-registers", (from, to, reply) => {
-  console.log('Server: read-input-registers');
-  return reply(null, null);
-});
-
-modServer.on("read-holding-registers", (from, to, reply) => {
-  console.log('Server: read-holding-registers');
-  return reply(null, null);
-});
-
-
-modServer.on("write-single-register", (address, value, reply) => {
-  console.log('Server: write-single-register');
-  return reply(null, [ 1, 0, 1, 1 ]);
-});
-
-modServer.on("write-multiple-coils", (address, value, reply) => {
-  console.log('Server: write-multiple-coils');
-  return reply(null, [ 1, 0, 1, 1 ]);
-});
-
-modServer.on("write-multiple-registers", (address, value, reply) => {
-  console.log('Server: write-multiple-registers');
-  return reply(null, [ 1, 0, 1, 1 ]);
-});
-
-
-modServer.on("data", (from, to, reply) => {
-  console.log("Server: data received!");
-});
-*/
 
 /// TCP Server:
 
 function onConnection(socket) {
   console.log('Server: Client connected!');
-  //socket.pipe(modServer).pipe(socket);
-  //socket.pipe(modServer);
   modServer.pipe(socket);
 }
 
