@@ -18,9 +18,9 @@ var Lift = function() {
 
     let timeoutId;
 
-    function noOperation() {
-        sm.dispatch({signal: 'no_operation'});
-    };
+    //function noOperation() {
+    //    sm.dispatch({signal: 'no_operation'});
+    //};
 
     motor.emitter.on('pos', (position) => {
         sm.dispatch({signal: "floor", data: position});
@@ -127,6 +127,11 @@ var Lift = function() {
                 case 'no_operation':
                     console.log('in_floor - no_operation');
                     sm.transfer(free);
+                case 'landing_call':
+                    landingCall = event.data;
+                    console.log('free - landing call to:' + landingCall);
+                    sm.transfer(landing_call);
+                    break;
                 case 'enter':
                     let floor = event.data;
                     console.log('free - try to enter lift in floor:' + floor);
@@ -141,11 +146,11 @@ var Lift = function() {
         entry(event) {
             console.log('Enter in_floor.');
             state = 'in_floor';
-            timeoutId = setTimeout(noOperation, 5000);
+            //timeoutId = setTimeout(noOperation, 5000);
         },
         exit(event) {
             console.log('Exit in_floor.');
-            clearTimeout(timeoutId);
+            //clearTimeout(timeoutId);
         }
     });
 

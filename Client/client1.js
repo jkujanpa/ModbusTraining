@@ -15,11 +15,14 @@ const tcpClient = net.connect(3000, 'localhost', () => {
 
 
     function completer(line) {
+        /*
         let completions = 'rc read-coils' +
                 'rdi read-discrete-inputs' +
                 'wsc write-single-coil' +
                 'wmc write-multiple-coils' +
                 'help'.split(' ');
+        */
+        let completions = 'rc read-coils rdi read-discrete-inputs wsc write-single-coil wmc write-multiple-coils help'.split(' ');
         let hits = completions.filter((c) => { return c.indexOf(line) == 0 });
         // show all completions if none found
         return [hits.length ? hits : completions, line]

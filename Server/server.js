@@ -7,7 +7,7 @@ const ExceptionCodes = modbus.Exceptions;
 
 const lift = require('../Server/lift').Lift();
 
-const COIL_COUNT = 24;
+const COIL_COUNT = 0x40;
 const DINPUT_COUNT = 24;
 const INPUT_REG_COUNT = 24;
 
@@ -69,11 +69,22 @@ modServer.on("write-single-coil", (address, value, reply) => {
     console.log('Server: write-single-coil ' + address + ':' + value[0]);
     memory.coils.data[address] = value[0];
 
-    if (address >= 0 && address <= 5 && value[0]) {
+    if (address >= 0x00 && address <= 0x05 && value[0]) {
+        console.log('Server: landing_call');
         lift.dispatch({signal: "landing_call", data: address});
     }
-    if (address >= 6 && address <= 11 && value[0]) {
-        lift.dispatch({signal: "car_call", data: address});
+    if (address >= 0x10 && address <= 0x15 && value[0]) {
+        console.log('Server: car_call');
+        lift.dispatch({signal: "car_call", data: address - 0x10});
+    }
+    if (address >= 0x20 && address <= 0x25 && value[0]) {
+        console.log('Server: enter');
+        lift.dispatch({signal: "enter", data: address - 0x20});
+    }
+
+    if (address >= 0x30 && address <= 0x35 && value[0]) {
+        console.log('Server: exit');
+        lift.dispatch({signal: "exit", data: address - 0x30});
     }
 
     return reply(null);
